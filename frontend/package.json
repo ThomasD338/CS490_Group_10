@@ -12,6 +12,8 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react-hooks": "^8.0.1",
+    "@tiptap/extension-text-style": "^3.10.7",
+    "@tiptap/extension-underline": "^3.10.7",
     "@tiptap/react": "^3.10.1",
     "@tiptap/starter-kit": "^3.10.1",
     "@twilio-labs/plugin-rtc": "^0.8.4",

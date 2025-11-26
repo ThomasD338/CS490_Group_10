@@ -47,8 +47,8 @@ export default class ViewingAreaController extends InteractableAreaController<
    *
    * @param viewingAreaModel The viewing area model that this controller should represent
    */
-  constructor(viewingAreaModel: ViewingAreaModel) {
-    super(viewingAreaModel.id);
+  constructor(viewingAreaModel: ViewingAreaModel, townController?: any) {
+    super(viewingAreaModel.id, townController || ({} as any));
     this._model = viewingAreaModel;
   }
 

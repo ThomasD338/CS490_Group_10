@@ -18,5 +18,12 @@ module.exports = {
         tsconfig: "tsconfig.jest.json"
       }
     ],
-  }
+  },
+  moduleNameMapper: {
+    '^canvas$': '<rootDir>/src/__mocks__/canvas.js',
+  },
+  // Configure jsdom to skip canvas
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
 };

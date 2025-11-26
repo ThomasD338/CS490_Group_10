@@ -31,9 +31,10 @@ export default class ConversationAreaController extends InteractableAreaControll
    * Create a new ConversationAreaController
    * @param id
    * @param topic
+   * @param townController
    */
-  constructor(id: string, topic?: string) {
-    super(id);
+  constructor(id: string, topic?: string, townController?: any) {
+    super(id, townController || ({} as any));
     this._topic = topic;
   }
 

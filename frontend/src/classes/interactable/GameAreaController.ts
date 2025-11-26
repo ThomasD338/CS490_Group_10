@@ -46,7 +46,7 @@ export default abstract class GameAreaController<
   protected _players: PlayerController[] = [];
 
   constructor(id: InteractableID, gameArea: GameArea<State>, townController: TownController) {
-    super(id);
+    super(id, townController);
     this._model = gameArea;
     this._townController = townController;
 

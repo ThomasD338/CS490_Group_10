@@ -10,3 +10,5 @@ Object.defineProperty(global, 'crypto', {
     getRandomValues: (arr: string[]) => crypto.randomBytes(arr.length),
   },
 });
+
+// Canvas is mocked via moduleNameMapper in jest.config.cjs

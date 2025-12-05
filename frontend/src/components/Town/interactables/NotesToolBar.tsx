@@ -67,6 +67,10 @@ export default function NotesToolbar({ editor }: ToolBarProps) {
       <Button size='sm' onClick={() => editor.chain().focus().toggleStrike().run()}>
         <s>S</s>
       </Button>
+
+      <Button size='sm' onClick={() => editor.chain().focus().toggleTaskList().run()}>
+        <text>[ ]</text>
+      </Button>
     </HStack>
   );
 }

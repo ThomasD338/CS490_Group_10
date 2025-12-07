@@ -16,6 +16,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
+import { ListKit } from '@tiptap/extension-list'
 import { useInteractable } from '../../../classes/TownController';
 import { NoteTakingArea } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
@@ -47,7 +48,7 @@ function NotesBoard({
   );
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyleKit],
+    extensions: [StarterKit, Underline, TextStyleKit, ListKit],
     content: currentNotes,
     immediatelyRender: false,
     onDestroy: () => {
@@ -85,21 +86,37 @@ function NotesBoard({
     };
   }, [editor]);
 
+
   return (
     <Box width='100%' height='100%'>
+    <style>
+      {`
+        .editable .ProseMirror {
+          min-height: 400px;
+          padding: 8px;
+        }
+
+        .editable .ProseMirror:after {
+          content: "";
+          display: block;
+          height: 150px;
+        }
+      `}
+    </style>
       <Box
         border='1px'
         borderColor='gray.300'
         borderRadius='md'
-        p={4}
+        p={0}
         minHeight='400px'
         mb={4}
         bg='white'>
         {editor && <NotesToolbar editor={editor} />}
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} className="editable"/>
       </Box>
     </Box>
   );
+
 }
 
 /**

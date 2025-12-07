@@ -10,14 +10,13 @@ import {
   Box,
   useToast,
 } from '@chakra-ui/react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
 import { useInteractable } from '../../../classes/TownController';
-import { NoteTakingArea } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
 import NoteTakingAreaInteractable from './NoteTakingArea';
 import NoteTakingAreaController, {
@@ -30,8 +29,6 @@ import { debounce } from 'lodash';
  */
 function NotesBoard({
   noteTakingAreaController,
-  onExport,
-  onImport,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
   onExport: () => void;

@@ -107,7 +107,11 @@ export default class ConversationAreaController extends InteractableAreaControll
     townController: TownController,
     playerFinder: (playerIDs: string[]) => PlayerController[],
   ): ConversationAreaController {
-    const ret = new ConversationAreaController(convAreaModel.id, townController, convAreaModel.topic);
+    const ret = new ConversationAreaController(
+      convAreaModel.id,
+      townController,
+      convAreaModel.topic,
+    );
     ret.occupants = playerFinder(convAreaModel.occupants);
     return ret;
   }

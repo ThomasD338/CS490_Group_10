@@ -70,7 +70,7 @@ function NotesBoard({
     if (activeNoteIndex >= remoteNotes.length) {
       setActiveNoteIndex(Math.max(0, remoteNotes.length - 1));
     }
-  }, [remoteNotes, activeNoteIndex, notes]);
+  }, [remoteNotes, activeNoteIndex]);
 
   const debouncedSaveNotes = useCallback(
     debounce((notesToSave: Note[]) => {
@@ -206,7 +206,12 @@ function NotesBoard({
 
   return (
     <Box width='100%' height='100%'>
-      <Tabs index={activeNoteIndex} onChange={setActiveNoteIndex} variant='soft-rounded' colorScheme='blue'>
+      <Tabs
+        index={activeNoteIndex}
+        onChange={setActiveNoteIndex}
+        variant='soft-rounded'
+        colorScheme='blue'
+        isLazy>
         <TabList overflowX='auto' flexWrap='nowrap'>
           {notes.map((note, index) => (
             <Tab key={note.id} p={2} position='relative'>
@@ -245,14 +250,14 @@ function NotesBoard({
                 mt={4}
                 mb={4}
                 bg='white'>
-                  <Input
-                    value={note.title}
-                    onChange={handleTitleChange}
-                    mb={3}
-                    placeholder='Note Title'
-                    fontSize='xl'
-                    fontWeight='bold'
-                  />
+                <Input
+                  value={note.title}
+                  onChange={handleTitleChange}
+                  mb={3}
+                  placeholder='Note Title'
+                  fontSize='xl'
+                  fontWeight='bold'
+                />
                 {/* Only render toolbar and editor if this tab is active AND the editor exists */}
                 {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
                 {editor && index === activeNoteIndex && <EditorContent editor={editor} />}

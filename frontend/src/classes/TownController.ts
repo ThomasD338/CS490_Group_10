@@ -644,7 +644,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
               ),
             );
           } else if (isViewingArea(eachInteractable)) {
-            this._interactableControllers.push(new ViewingAreaController(eachInteractable));
+            this._interactableControllers.push(new ViewingAreaController(eachInteractable, useTownController()));
           } else if (isTicTacToeArea(eachInteractable)) {
             this._interactableControllers.push(
               new TicTacToeAreaController(eachInteractable.id, eachInteractable, this),

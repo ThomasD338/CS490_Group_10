@@ -16,7 +16,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
-import { TaskItem, TaskList } from '@tiptap/extension-list'
+import { ListKit } from '@tiptap/extension-list'
 import { useInteractable } from '../../../classes/TownController';
 import { NoteTakingArea } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
@@ -40,7 +40,7 @@ function NotesBoard({
   const currentNotes = useNoteTakingAreaNotes(noteTakingAreaController);
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyleKit, TaskItem, TaskList],
+    extensions: [StarterKit, Underline, TextStyleKit, ListKit],
     content: currentNotes,
     immediatelyRender: false,
     onDestroy: () => {

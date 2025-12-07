@@ -81,3 +81,9 @@
 .ProseMirror ul[data-type='taskList'] li > div {
   flex: 1;
 }
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.25rem;
+  margin: 0;
+}

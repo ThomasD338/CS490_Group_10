@@ -23,6 +23,7 @@ import NoteTakingAreaInteractable from './NoteTakingArea';
 import NoteTakingAreaController, {
   useNoteTakingAreaNotes,
 } from '../../../classes/interactable/NoteTakingAreaController';
+import { debounce } from 'lodash';
 
 /**
  * NotesBoard component - A text editor using Tiptap for note-taking
@@ -38,6 +39,13 @@ function NotesBoard({
 }): JSX.Element {
   const currentNotes = useNoteTakingAreaNotes(noteTakingAreaController);
 
+  const debouncedSaveNotes = useCallback(
+    debounce((notes: string) => {
+      noteTakingAreaController.updateNotes(notes);
+    }, 150),
+    [noteTakingAreaController],
+  );
+
   const editor = useEditor({
     extensions: [StarterKit, Underline, TextStyleKit],
     content: currentNotes,
@@ -49,12 +57,9 @@ function NotesBoard({
       }
       console.log('Editor destroyed, notes saved to backend!');
     },
-    onUpdate: () => {
-      // Save notes back to the backend on every update
-      if (editor) {
-        noteTakingAreaController.updateNotes(editor.getHTML());
-      }
-      console.log('Editor updated, notes saved to backend!');
+    onUpdate: ({ editor: updatedEditor }) => {
+      const notes = updatedEditor.getHTML();
+      debouncedSaveNotes(notes);
     },
   });
 
@@ -160,10 +165,43 @@ export default function NotesBoardWrapper(): JSX.Element {
   }, []);
 
   const handleImport = useCallback(() => {
-    // TODO: Implement import functionality
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.txt, .html';
+
+    fileInput.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      try {
+        if (target.files && target.files.length > 0) {
+          const file = target.files[0];
+          const reader = new FileReader();
+          reader.onload = loadEvent => {
+            const text = loadEvent.target?.result;
+            if (typeof text === 'string') {
+              const editor = (window as any).__notesBoardEditor;
+              if (editor) {
+                editor.commands.setContent(text);
+                toast({
+                  title: 'Notes imported successfully!',
+                  status: 'success',
+                  duration: 3000,
+                  isClosable: true,
+                });
+              }
+            }
+          };
+          reader.readAsText(file);
+        }
+      } finally {
+        document.body.removeChild(fileInput);
+      }
+    };
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
     console.log('Import button clicked');
     // Future: Could open file picker here
-  }, []);
+  }, [toast]);
 
   if (!noteTakingAreaController) {
     return <></>;

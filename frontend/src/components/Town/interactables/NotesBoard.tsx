@@ -25,7 +25,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
-import { ListKit } from '@tiptap/extension-list'
+import { ListKit } from '@tiptap/extension-list';
 import { useInteractable } from '../../../classes/TownController';
 import { NoteTakingArea, Note } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
@@ -213,16 +213,15 @@ function NotesBoard({
     return <></>;
   }
 
-
   return (
     <Box width='100%' height='100%'>
-    <style>
-      {`
+      <style>
+        {`
 
         .editable .ProseMirror {
           min-height: 400px;
           padding: 8px;
-       
+        }
         }
 
         .editable .ProseMirror:after {
@@ -231,7 +230,7 @@ function NotesBoard({
           height: 250px;
         }
       `}
-    </style>
+      </style>
       {/* <Box
         border='1px'
         borderColor='gray.300'
@@ -297,7 +296,9 @@ function NotesBoard({
                 />
                 {/* Only render toolbar and editor if this tab is active AND the editor exists */}
                 {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
-                {editor && index === activeNoteIndex && <EditorContent editor={editor} className="editable"/>}
+                {editor && index === activeNoteIndex && (
+                  <EditorContent editor={editor} className='editable' />
+                )}
               </Box>
             </TabPanel>
           ))}
@@ -305,7 +306,6 @@ function NotesBoard({
       </Tabs>
     </Box>
   );
-
 }
 
 /**
@@ -352,9 +352,7 @@ export default function NotesBoardWrapper(): JSX.Element {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const downloadFileName = title
-        ? `${title}.html`
-        : 'notes.html';
+      const downloadFileName = title ? `${title}.html` : 'notes.html';
       link.download = downloadFileName;
       document.body.appendChild(link);
       link.click();
@@ -389,8 +387,7 @@ export default function NotesBoardWrapper(): JSX.Element {
           reader.onload = loadEvent => {
             const text = loadEvent.target?.result;
             if (typeof text === 'string') {
-              const setContentAndTitle = (window as any)
-                .__notesBoardEditorSetContentAndTitle;
+              const setContentAndTitle = (window as any).__notesBoardEditorSetContentAndTitle;
               if (setContentAndTitle) {
                 // Use the exposed function to set content and update the title
                 setContentAndTitle(text, fileName);

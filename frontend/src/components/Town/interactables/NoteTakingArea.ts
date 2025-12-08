@@ -13,7 +13,7 @@ export default class NoteTakingArea extends Interactable {
 
   private _changeListener?: NoteTakingAreaEvents['notesChange'];
 
-  private _notes = NoteTakingAreaController['_initializeNotes'](undefined);
+  private _notes = NoteTakingAreaController._initializeNotes(undefined);
 
   getType(): KnownInteractableTypes {
     return 'noteTakingArea';

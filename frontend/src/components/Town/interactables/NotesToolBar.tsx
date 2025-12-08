@@ -79,7 +79,6 @@ export default function NotesToolbar({ editor }: ToolBarProps) {
       <Button size='sm' onClick={() => editor.chain().focus().toggleOrderedList().run()}>
         <text>1.</text>
       </Button>
-
     </HStack>
   );
 }

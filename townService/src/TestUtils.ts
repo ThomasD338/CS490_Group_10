@@ -1,8 +1,7 @@
-import { BroadcastOperator } from 'socket.io';
+import { BroadcastOperator, Server } from 'socket.io';
 
 import { mock, mockDeep, MockProxy } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
-import { Server, Socket } from 'socket.io';
 import {
   EventNames,
   EventParams,
@@ -47,10 +46,7 @@ export function defaultLocation(): PlayerLocation {
   return { x: 0, y: 0, moving: false, rotation: 'front', interactableID: undefined };
 }
 
-export type ClientEventTypes = ReservedOrUserEventNames<
-  Server,
-  ClientToServerEvents
->;
+export type ClientEventTypes = ReservedOrUserEventNames<Server, ClientToServerEvents>;
 
 /**
  * Resets all recorded mock calls for the given emitter (optionally only for a given event name)
@@ -113,9 +109,7 @@ export function extractSessionToken(player: MockedPlayer): string {
  * @returns the corresponding event handler for that event name
  * @throws Error if no handler was registered
  */
-export function getEventListener<
-  Ev extends ReservedOrUserEventNames<Server, ClientToServerEvents>,
->(
+export function getEventListener<Ev extends ReservedOrUserEventNames<Server, ClientToServerEvents>>(
   mockSocket: MockProxy<CoveyTownSocket>,
   eventName: Ev,
 ): ReservedOrUserListener<Server, ClientToServerEvents, Ev> {
@@ -123,11 +117,7 @@ export function getEventListener<
   if (ret) {
     const param = ret[1];
     if (param) {
-      return param as unknown as ReservedOrUserListener<
-        Server,
-        ClientToServerEvents,
-        Ev
-      >;
+      return param as unknown as ReservedOrUserListener<Server, ClientToServerEvents, Ev>;
     }
   }
   throw new Error(`No event listener found for event ${eventName}`);

@@ -51,7 +51,7 @@ export default class NoteTakingAreaController extends InteractableAreaController
 
   private _notes: Note[] = [];
 
-  private static _initializeNotes(notes: Note[] | string | undefined): Note[] {
+  public static _initializeNotes(notes: Note[] | string | undefined): Note[] {
     if (Array.isArray(notes)) {
       return notes;
     }

@@ -74,8 +74,14 @@ export interface ViewingArea extends Interactable {
   elapsedTimeSec: number;
 }
 
+export interface Note {
+  title: string;
+  content: string; // HTML content from Tiptap
+  id: string; // Unique ID for the note/tab
+}
+
 export interface NoteTakingArea extends Interactable {
-  notes?: string;
+  notes?: Note[];
 }
 
 export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER' | 'WAITING_FOR_PLAYERS';
@@ -222,7 +228,7 @@ interface InteractableCommandBase {
 
 export interface NoteTakingAreaUpdateCommand {
   type: 'NoteTakingAreaUpdate';
-  notes: string;
+  notes: Note[];
 }
 export type InteractableCommand =  ViewingAreaUpdateCommand | JoinGameCommand | GameMoveCommand<TicTacToeMove> | GameMoveCommand<ConnectFourMove> | StartGameCommand | LeaveGameCommand | NoteTakingAreaUpdateCommand;
 export interface ViewingAreaUpdateCommand  {

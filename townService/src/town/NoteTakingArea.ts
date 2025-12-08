@@ -8,6 +8,7 @@ import {
   InteractableCommandReturnType,
   TownEmitter,
   NoteTakingAreaUpdateCommand,
+  Note,
 } from '../types/CoveyTownSocket';
 import InteractableArea from './InteractableArea';
 
@@ -25,7 +26,7 @@ export default class NoteTakingArea extends InteractableArea {
   }
 
   /* The notes in the note-taking area */
-  public notes?: string;
+  public notes?: Note[];
 
   /** The note-taking area is "active" when there are players inside of it  */
   public get isActive(): boolean {
@@ -69,7 +70,15 @@ export default class NoteTakingArea extends InteractableArea {
       throw new Error(`Malformed viewing area ${name}`);
     }
     const rect: BoundingBox = { x: mapObject.x, y: mapObject.y, width, height };
-    return new NoteTakingArea({ id: name, occupants: [], notes: '' }, rect, broadcastEmitter);
+    return new NoteTakingArea(
+      {
+        id: name,
+        occupants: [],
+        notes: [{ id: 'note-1', title: 'Untitled Note 1', content: '<p>New Note</p>' }],
+      },
+      rect,
+      broadcastEmitter,
+    );
   }
 
   public remove(player: Player) {

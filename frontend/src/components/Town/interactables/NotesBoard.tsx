@@ -134,6 +134,7 @@ function NotesBoard({
     if (activeNote) {
       // Store active note content reference on window temporarily for button handlers
       (window as any).__notesBoardEditorContent = activeNote.content;
+      (window as any).__notesBoardEditorTitle = activeNote.title;
       (window as any).__notesBoardEditorSetContent = (newContent: string) => {
         if (activeNote) {
           const updatedNotes = notes.map((note, idx) =>
@@ -148,10 +149,12 @@ function NotesBoard({
       };
     } else {
       delete (window as any).__notesBoardEditorContent;
+      delete (window as any).__notesBoardEditorTitle;
       delete (window as any).__notesBoardEditorSetContent;
     }
     return () => {
       delete (window as any).__notesBoardEditorContent;
+      delete (window as any).__notesBoardEditorTitle;
       delete (window as any).__notesBoardEditorSetContent;
     };
   }, [activeNote, notes, activeNoteIndex, handleUpdateNotes, editor]);
@@ -336,12 +339,16 @@ export default function NotesBoardWrapper(): JSX.Element {
 
   const handleExport = useCallback(() => {
     const content = (window as any).__notesBoardEditorContent;
+    const title: string | undefined = (window as any).__notesBoardEditorTitle;
     if (content) {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'notes.html';
+      const downloadFileName = title
+        ? `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`
+        : 'notes.html';
+      link.download = downloadFileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

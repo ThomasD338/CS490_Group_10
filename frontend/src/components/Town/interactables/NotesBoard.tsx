@@ -35,7 +35,7 @@ import NoteTakingAreaController, {
 } from '../../../classes/interactable/NoteTakingAreaController';
 import { debounce } from 'lodash';
 
-const createNewNote = (id: string, title: string, content = '<h1>New Note</h1>'): Note => ({
+const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): Note => ({
   id,
   title,
   content,

@@ -74,7 +74,7 @@ export default class NoteTakingArea extends InteractableArea {
       {
         id: name,
         occupants: [],
-        notes: [{ id: 'note-1', title: 'Untitled Note 1', content: '<h1>New Note</h1>' }],
+        notes: [{ id: 'note-1', title: 'Untitled Note 1', content: '<p>New Note</p>' }],
       },
       rect,
       broadcastEmitter,

@@ -135,10 +135,15 @@ function NotesBoard({
       // Store active note content reference on window temporarily for button handlers
       (window as any).__notesBoardEditorContent = activeNote.content;
       (window as any).__notesBoardEditorTitle = activeNote.title;
-      (window as any).__notesBoardEditorSetContent = (newContent: string) => {
+      (window as any).__notesBoardEditorSetContentAndTitle = (
+        newContent: string,
+        newTitle?: string,
+      ) => {
         if (activeNote) {
           const updatedNotes = notes.map((note, idx) =>
-            idx === activeNoteIndex ? { ...note, content: newContent } : note,
+            idx === activeNoteIndex
+              ? { ...note, content: newContent, title: newTitle || note.title }
+              : note,
           );
           handleUpdateNotes(updatedNotes);
           // Manually update Tiptap editor if it's currently showing the tab that got imported data
@@ -150,12 +155,12 @@ function NotesBoard({
     } else {
       delete (window as any).__notesBoardEditorContent;
       delete (window as any).__notesBoardEditorTitle;
-      delete (window as any).__notesBoardEditorSetContent;
+      delete (window as any).__notesBoardEditorSetContentAndTitle;
     }
     return () => {
       delete (window as any).__notesBoardEditorContent;
       delete (window as any).__notesBoardEditorTitle;
-      delete (window as any).__notesBoardEditorSetContent;
+      delete (window as any).__notesBoardEditorSetContentAndTitle;
     };
   }, [activeNote, notes, activeNoteIndex, handleUpdateNotes, editor]);
 
@@ -348,7 +353,7 @@ export default function NotesBoardWrapper(): JSX.Element {
       const link = document.createElement('a');
       link.href = url;
       const downloadFileName = title
-        ? `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`
+        ? `${title}.html`
         : 'notes.html';
       link.download = downloadFileName;
       document.body.appendChild(link);
@@ -377,14 +382,20 @@ export default function NotesBoardWrapper(): JSX.Element {
         if (target.files && target.files.length > 0) {
           const file = target.files[0];
           const reader = new FileReader();
+
+          // Get the filename without extension to use as the new note title
+          const fileName = file.name.replace(/\.[^/.]+$/, '');
+
           reader.onload = loadEvent => {
             const text = loadEvent.target?.result;
             if (typeof text === 'string') {
-              const setContent = (window as any).__notesBoardEditorSetContent;
-              if (setContent) {
-                setContent(text); // Use the exposed setContent function
+              const setContentAndTitle = (window as any)
+                .__notesBoardEditorSetContentAndTitle;
+              if (setContentAndTitle) {
+                // Use the exposed function to set content and update the title
+                setContentAndTitle(text, fileName);
                 toast({
-                  title: 'Notes imported successfully!',
+                  title: `Notes imported successfully into tab: ${fileName}`,
                   status: 'success',
                   duration: 3000,
                   isClosable: true,

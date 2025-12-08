@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.9",
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
@@ -10,6 +11,7 @@
     "@material-ui/icons": "^4.11.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
+    "@react-spring/web": "^9.7.5",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react-hooks": "^8.0.1",
     "@tiptap/extension-text-style": "^3.10.7",

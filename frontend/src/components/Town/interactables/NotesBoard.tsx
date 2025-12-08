@@ -213,15 +213,17 @@ function NotesBoard({
     <Box width='100%' height='100%'>
     <style>
       {`
+
         .editable .ProseMirror {
           min-height: 400px;
           padding: 8px;
+       
         }
 
         .editable .ProseMirror:after {
           content: "";
           display: block;
-          height: 150px;
+          height: 250px;
         }
       `}
     </style>
@@ -290,7 +292,7 @@ function NotesBoard({
                 />
                 {/* Only render toolbar and editor if this tab is active AND the editor exists */}
                 {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
-                {editor && index === activeNoteIndex && <EditorContent editor={editor} />}
+                {editor && index === activeNoteIndex && <EditorContent editor={editor} className="editable"/>}
               </Box>
             </TabPanel>
           ))}

@@ -24,6 +24,9 @@ export default class NoteTakingAreaController extends InteractableAreaController
   NoteTakingAreaEvents,
   NoteTakingArea
 > {
+
+  protected _townController: TownController;
+
   toInteractableAreaModel(): NoteTakingArea {
     return {
       id: this.id,
@@ -72,7 +75,8 @@ export default class NoteTakingAreaController extends InteractableAreaController
    * @param notes
    */
   constructor(id: string, notes: Note[] | string | undefined, townController: TownController) {
-    super(id, townController);
+    super(id);
+    this._townController = townController;
     this._notes = NoteTakingAreaController._initializeNotes(notes);
   }
 
@@ -102,7 +106,7 @@ export default class NoteTakingAreaController extends InteractableAreaController
       type: 'NoteTakingAreaUpdate',
       notes: newNotes,
     };
-    await this.townController.sendInteractableCommand(this.id, command);
+    await this._townController.sendInteractableCommand(this.id, command);
   }
 
   static fromNoteTakingAreaModel(

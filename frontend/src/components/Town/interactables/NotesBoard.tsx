@@ -475,7 +475,18 @@ function NotesBoardModal({
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `notes-export-${Date.now()}.zip`;
+      
+      // Create a readable datetime string for the filename
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const datetimeString = `${year}-${month}-${day}-${hours}${minutes}${seconds}`;
+      
+      link.download = `notes-export-${datetimeString}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

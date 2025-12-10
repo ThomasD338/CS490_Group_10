@@ -1,5 +1,4 @@
 import { ViewingArea as ViewingAreaModel } from '../../types/CoveyTownSocket';
-import TownController from '../TownController';
 import InteractableAreaController, {
   BaseInteractableEventMap,
   VIEWING_AREA_TYPE,
@@ -48,8 +47,8 @@ export default class ViewingAreaController extends InteractableAreaController<
    *
    * @param viewingAreaModel The viewing area model that this controller should represent
    */
-  constructor(viewingAreaModel: ViewingAreaModel, townController: TownController) {
-    super(viewingAreaModel.id, townController);
+  constructor(viewingAreaModel: ViewingAreaModel) {
+    super(viewingAreaModel.id);
     this._model = viewingAreaModel;
   }
 

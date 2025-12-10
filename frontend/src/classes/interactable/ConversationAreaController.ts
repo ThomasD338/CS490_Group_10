@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { ConversationArea as ConversationAreaModel } from '../../types/CoveyTownSocket';
-import TownController from '../TownController';
 import PlayerController from '../PlayerController';
 import InteractableAreaController, {
   BaseInteractableEventMap,
@@ -33,12 +32,8 @@ export default class ConversationAreaController extends InteractableAreaControll
    * @param id
    * @param topic
    */
-
-  protected _townController: TownController;
-
-  constructor(id: string, townController: TownController, topic?: string) {
-    super(id, townController);
-    this._townController = townController;
+  constructor(id: string, topic?: string) {
+    super(id);
     this._topic = topic;
   }
 
@@ -104,14 +99,9 @@ export default class ConversationAreaController extends InteractableAreaControll
    */
   static fromConversationAreaModel(
     convAreaModel: ConversationAreaModel,
-    townController: TownController,
     playerFinder: (playerIDs: string[]) => PlayerController[],
   ): ConversationAreaController {
-    const ret = new ConversationAreaController(
-      convAreaModel.id,
-      townController,
-      convAreaModel.topic,
-    );
+    const ret = new ConversationAreaController(convAreaModel.id, convAreaModel.topic);
     ret.occupants = playerFinder(convAreaModel.occupants);
     return ret;
   }

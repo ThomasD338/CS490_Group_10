@@ -1,8 +1,9 @@
 import assert from 'assert';
+import { generateKey } from 'crypto';
 import EventEmitter from 'events';
 import _ from 'lodash';
 import { nanoid } from 'nanoid';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
 import Interactable from '../components/Town/Interactable';
@@ -631,7 +632,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
             this._interactableControllers.push(
               ConversationAreaController.fromConversationAreaModel(
                 eachInteractable,
-                useTownController(),
                 this._playersByIDs.bind(this),
               ),
             );
@@ -644,9 +644,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
               ),
             );
           } else if (isViewingArea(eachInteractable)) {
-            this._interactableControllers.push(
-              new ViewingAreaController(eachInteractable, useTownController()),
-            );
+            this._interactableControllers.push(new ViewingAreaController(eachInteractable));
           } else if (isTicTacToeArea(eachInteractable)) {
             this._interactableControllers.push(
               new TicTacToeAreaController(eachInteractable.id, eachInteractable, this),

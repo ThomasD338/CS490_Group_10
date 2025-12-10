@@ -46,8 +46,6 @@ const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): 
  */
 function NotesBoard({
   noteTakingAreaController,
-  onExport,
-  onImport,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
   onExport: (content: string) => void;

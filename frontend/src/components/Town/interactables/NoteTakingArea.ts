@@ -1,6 +1,7 @@
 import NoteTakingAreaController, {
   NoteTakingAreaEvents,
 } from '../../../classes/interactable/NoteTakingAreaController';
+import { Note } from '../../../types/CoveyTownSocket';
 import Interactable, { KnownInteractableTypes } from '../Interactable';
 
 export default class NoteTakingArea extends Interactable {
@@ -12,17 +13,17 @@ export default class NoteTakingArea extends Interactable {
 
   private _changeListener?: NoteTakingAreaEvents['notesChange'];
 
-  private _notes = '';
+  private _notes = NoteTakingAreaController._initializeNotes(undefined);
 
   getType(): KnownInteractableTypes {
     return 'noteTakingArea';
   }
 
-  get notes(): string {
+  get notes(): Note[] {
     return this._notes;
   }
 
-  set notes(newNotes: string) {
+  set notes(newNotes: Note[]) {
     this._notes = newNotes;
     this._noteTakingArea?.emit('notesChange', newNotes);
   }
@@ -52,8 +53,8 @@ export default class NoteTakingArea extends Interactable {
     this._changeListener = newNotes => this._updateLabelText(newNotes);
   }
 
-  private _updateLabelText(newNotes: string) {
-    this._labelText?.setText(newNotes);
+  private _updateLabelText(newNotes: Note[]) {
+    this._labelText?.setText(`Press space to take notes (${newNotes.length})`);
   }
 
   removedFromScene(): void {

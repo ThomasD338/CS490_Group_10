@@ -9,20 +9,37 @@ import {
   ModalOverlay,
   Box,
   useToast,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Flex,
+  IconButton,
+  Input,
 } from '@chakra-ui/react';
-import React, { useCallback, useEffect } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { CloseIcon } from '@chakra-ui/icons';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
+import { ListKit } from '@tiptap/extension-list';
 import { useInteractable } from '../../../classes/TownController';
+import { NoteTakingArea, Note } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
 import NoteTakingAreaInteractable from './NoteTakingArea';
 import NoteTakingAreaController, {
   useNoteTakingAreaNotes,
 } from '../../../classes/interactable/NoteTakingAreaController';
 import { debounce } from 'lodash';
+
+const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): Note => ({
+  id,
+  title,
+  content,
+});
 
 /**
  * NotesBoard component - A text editor using Tiptap for note-taking
@@ -31,70 +48,260 @@ function NotesBoard({
   noteTakingAreaController,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
-  onExport: () => void;
-  onImport: () => void;
+  onExport: (content: string) => void;
+  onImport: (content: string) => void;
 }): JSX.Element {
-  const currentNotes = useNoteTakingAreaNotes(noteTakingAreaController);
+  // remoteNotes is now Note[]
+  const remoteNotes = useNoteTakingAreaNotes(noteTakingAreaController);
+
+  // We manage notes locally to support real-time editing before debouncing,
+  // and we manage which tab is active.
+  const [notes, setNotes] = useState<Note[]>(remoteNotes);
+  const [activeNoteIndex, setActiveNoteIndex] = useState(0);
+
+  // Sync notes from controller (remote) to local state
+  useEffect(() => {
+    // Only update if remote notes are different from current local notes array reference
+    if (remoteNotes !== notes) {
+      setNotes(remoteNotes);
+    }
+    // Ensure active index is valid
+    if (activeNoteIndex >= remoteNotes.length) {
+      setActiveNoteIndex(Math.max(0, remoteNotes.length - 1));
+    }
+  }, [remoteNotes, activeNoteIndex]);
 
   const debouncedSaveNotes = useCallback(
-    debounce((notes: string) => {
-      noteTakingAreaController.updateNotes(notes);
-    }, 150),
+    debounce((notesToSave: Note[]) => {
+      // Only save if the noteTakingAreaController is defined (which it is here)
+      noteTakingAreaController.updateNotes(notesToSave);
+    }, 150), // Increased debounce time for array updates
     [noteTakingAreaController],
   );
 
+  // Handle note updates locally and debounce the save to the controller
+  const handleUpdateNotes = useCallback(
+    (updatedNotes: Note[]) => {
+      setNotes(updatedNotes);
+      debouncedSaveNotes(updatedNotes);
+    },
+    [debouncedSaveNotes],
+  );
+
+  const activeNote = notes[activeNoteIndex];
+
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyleKit],
-    content: currentNotes,
+    extensions: [StarterKit, Underline, TextStyleKit, ListKit],
+    content: activeNote?.content || '', // Use content of active note
     immediatelyRender: false,
     onDestroy: () => {
-      // Save notes back to the backend when editor is destroyed
-      if (editor) {
-        noteTakingAreaController.updateNotes(editor.getHTML());
+      // Cleanup: Attempt to save latest state on destroy
+      debouncedSaveNotes.cancel(); // Cancel any pending debounce
+      if (notes) {
+        noteTakingAreaController.updateNotes(notes);
       }
       console.log('Editor destroyed, notes saved to backend!');
     },
     onUpdate: ({ editor: updatedEditor }) => {
-      const notes = updatedEditor.getHTML();
-      debouncedSaveNotes(notes);
+      if (activeNote) {
+        const newContent = updatedEditor.getHTML();
+        // Check if content actually changed before propagating state update and debounce
+        if (newContent !== activeNote.content) {
+          const updatedNotes = notes.map((note, idx) =>
+            idx === activeNoteIndex ? { ...note, content: newContent } : note,
+          );
+          handleUpdateNotes(updatedNotes);
+        }
+      }
     },
   });
 
-  // Update editor content when notes change externally
+  // Effect to handle content synchronization when active note changes (tab switch)
   useEffect(() => {
-    if (editor && currentNotes !== undefined) {
-      console.log('updating editor content from notes:');
-      console.log(currentNotes);
-      if (editor.getHTML() !== currentNotes) {
-        editor.commands.setContent(currentNotes);
+    if (editor && activeNote) {
+      // If the editor content doesn't match the note content, update the editor
+      if (editor.getHTML() !== activeNote.content) {
+        // Set content without emitting an update event
+        editor.commands.setContent(activeNote.content, { emitUpdate: false });
       }
     }
-  }, [editor, currentNotes]);
+  }, [editor, activeNote]);
 
-  // Expose editor to parent for export
+  // Expose editor content (of active note) to parent for export/import
   useEffect(() => {
-    if (editor) {
-      // Store editor reference on window temporarily for button handlers
-      (window as any).__notesBoardEditor = editor;
+    if (activeNote) {
+      // Store active note content reference on window temporarily for button handlers
+      (window as any).__notesBoardEditorContent = activeNote.content;
+      (window as any).__notesBoardEditorTitle = activeNote.title;
+      (window as any).__notesBoardEditorSetContentAndTitle = (
+        newContent: string,
+        newTitle?: string,
+      ) => {
+        if (activeNote) {
+          const updatedNotes = notes.map((note, idx) =>
+            idx === activeNoteIndex
+              ? { ...note, content: newContent, title: newTitle || note.title }
+              : note,
+          );
+          handleUpdateNotes(updatedNotes);
+          // Manually update Tiptap editor if it's currently showing the tab that got imported data
+          if (editor) {
+            editor.commands.setContent(newContent, { emitUpdate: false });
+          }
+        }
+      };
+    } else {
+      delete (window as any).__notesBoardEditorContent;
+      delete (window as any).__notesBoardEditorTitle;
+      delete (window as any).__notesBoardEditorSetContentAndTitle;
     }
     return () => {
-      delete (window as any).__notesBoardEditor;
+      delete (window as any).__notesBoardEditorContent;
+      delete (window as any).__notesBoardEditorTitle;
+      delete (window as any).__notesBoardEditorSetContentAndTitle;
     };
-  }, [editor]);
+  }, [activeNote, notes, activeNoteIndex, handleUpdateNotes, editor]);
+
+  // Tab management functions
+  const handleAddTab = useCallback(() => {
+    // Generate simple sequential ID. In a real application, use UUID.
+    const newId = `note-${Date.now()}`;
+    const newNote = createNewNote(newId, `Untitled Note ${notes.length + 1}`);
+    const updatedNotes = [...notes, newNote];
+    handleUpdateNotes(updatedNotes);
+    setActiveNoteIndex(updatedNotes.length - 1); // Switch to the new tab
+  }, [notes, handleUpdateNotes]);
+
+  const handleCloseTab = useCallback(
+    (indexToClose: number) => {
+      const newNotes = notes.filter((_, idx) => idx !== indexToClose);
+      if (newNotes.length === 0) {
+        // Must always have at least one note
+        handleAddTab();
+        return;
+      }
+
+      // Adjust active index
+      let newActiveIndex = activeNoteIndex;
+      if (indexToClose === activeNoteIndex) {
+        // If closing the active tab, move to the previous one, or 0 if it was the first
+        newActiveIndex = Math.max(0, indexToClose - 1);
+      } else if (indexToClose < activeNoteIndex) {
+        // If closing a tab before the active one, shift the active index left
+        newActiveIndex = activeNoteIndex - 1;
+      }
+      handleUpdateNotes(newNotes);
+      setActiveNoteIndex(newActiveIndex);
+    },
+    [notes, activeNoteIndex, handleUpdateNotes, handleAddTab],
+  );
+
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newTitle = e.target.value;
+      const updatedNotes = notes.map((note, idx) =>
+        idx === activeNoteIndex ? { ...note, title: newTitle } : note,
+      );
+      handleUpdateNotes(updatedNotes);
+    },
+    [notes, activeNoteIndex, handleUpdateNotes],
+  );
+
+  if (!activeNote) {
+    return <></>;
+  }
 
   return (
     <Box width='100%' height='100%'>
-      <Box
+      <style>
+        {`
+
+        .editable .ProseMirror {
+          min-height: 400px;
+          padding: 8px;
+        }
+        }
+
+        .editable .ProseMirror:after {
+          content: "";
+          display: block;
+          height: 250px;
+        }
+      `}
+      </style>
+      {/* <Box
         border='1px'
         borderColor='gray.300'
         borderRadius='md'
-        p={4}
+        p={0}
         minHeight='400px'
         mb={4}
         bg='white'>
         {editor && <NotesToolbar editor={editor} />}
-        <EditorContent editor={editor} />
-      </Box>
+        <EditorContent editor={editor} className="editable"/>
+      </Box> */}
+      <Tabs
+        index={activeNoteIndex}
+        onChange={setActiveNoteIndex}
+        variant='soft-rounded'
+        colorScheme='blue'
+        isLazy>
+        <TabList overflowX='auto' flexWrap='nowrap'>
+          {notes.map((note, index) => (
+            <Tab key={note.id} p={2} position='relative'>
+              <Flex align='center'>
+                {note.title}
+                {notes.length > 1 && (
+                  <IconButton
+                    icon={<CloseIcon />}
+                    size='xs'
+                    variant='ghost'
+                    ml={2}
+                    aria-label={`Close ${note.title}`}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleCloseTab(index);
+                    }}
+                  />
+                )}
+              </Flex>
+            </Tab>
+          ))}
+          <Button size='sm' onClick={handleAddTab} ml={2} flexShrink={0}>
+            + Add Tab
+          </Button>
+        </TabList>
+
+        <TabPanels>
+          {notes.map((note, index) => (
+            <TabPanel key={note.id} p={0}>
+              <Box
+                border='1px'
+                borderColor='gray.300'
+                borderRadius='md'
+                p={4}
+                minHeight='400px'
+                mt={4}
+                mb={4}
+                bg='white'>
+                <Input
+                  value={note.title}
+                  onChange={handleTitleChange}
+                  mb={3}
+                  placeholder='Note Title'
+                  fontSize='xl'
+                  fontWeight='bold'
+                />
+                {/* Only render toolbar and editor if this tab is active AND the editor exists */}
+                {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
+                {editor && index === activeNoteIndex && (
+                  <EditorContent editor={editor} className='editable' />
+                )}
+              </Box>
+            </TabPanel>
+          ))}
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 }
@@ -136,15 +343,15 @@ export default function NotesBoardWrapper(): JSX.Element {
   const toast = useToast();
 
   const handleExport = useCallback(() => {
-    // TODO: Implement export functionality
-    const editor = (window as any).__notesBoardEditor;
-    if (editor) {
-      const content = editor.getHTML();
+    const content = (window as any).__notesBoardEditorContent;
+    const title: string | undefined = (window as any).__notesBoardEditorTitle;
+    if (content) {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'notes.html';
+      const downloadFileName = title ? `${title}.html` : 'notes.html';
+      link.download = downloadFileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -156,10 +363,9 @@ export default function NotesBoardWrapper(): JSX.Element {
         isClosable: true,
       });
     } else {
-      console.log('Export button clicked - Nothing happened!');
-      // Future: Could trigger file download here
+      console.log('Export button clicked - No active note content found!');
     }
-  }, []);
+  }, [toast]);
 
   const handleImport = useCallback(() => {
     const fileInput = document.createElement('input');
@@ -172,14 +378,19 @@ export default function NotesBoardWrapper(): JSX.Element {
         if (target.files && target.files.length > 0) {
           const file = target.files[0];
           const reader = new FileReader();
+
+          // Get the filename without extension to use as the new note title
+          const fileName = file.name.replace(/\.[^/.]+$/, '');
+
           reader.onload = loadEvent => {
             const text = loadEvent.target?.result;
             if (typeof text === 'string') {
-              const editor = (window as any).__notesBoardEditor;
-              if (editor) {
-                editor.commands.setContent(text);
+              const setContentAndTitle = (window as any).__notesBoardEditorSetContentAndTitle;
+              if (setContentAndTitle) {
+                // Use the exposed function to set content and update the title
+                setContentAndTitle(text, fileName);
                 toast({
-                  title: 'Notes imported successfully!',
+                  title: `Notes imported successfully into tab: ${fileName}`,
                   status: 'success',
                   duration: 3000,
                   isClosable: true,
@@ -190,14 +401,16 @@ export default function NotesBoardWrapper(): JSX.Element {
           reader.readAsText(file);
         }
       } finally {
-        document.body.removeChild(fileInput);
+        // Ensure file input is removed after use, even if errors occur
+        if (document.body.contains(fileInput)) {
+          document.body.removeChild(fileInput);
+        }
       }
     };
 
     document.body.appendChild(fileInput);
     fileInput.click();
     console.log('Import button clicked');
-    // Future: Could open file picker here
   }, [toast]);
 
   if (!noteTakingAreaController) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import TownController from '../TownController';
-import { NoteTakingArea, NoteTakingAreaUpdateCommand } from '../../types/CoveyTownSocket';
+import { NoteTakingArea, NoteTakingAreaUpdateCommand, Note } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 import InteractableAreaController, {
   BaseInteractableEventMap,
@@ -12,7 +12,7 @@ import InteractableAreaController, {
  * are only ever emitted to local components (not to the townService).
  */
 export type NoteTakingAreaEvents = BaseInteractableEventMap & {
-  notesChange: (newNotes: string) => void;
+  notesChange: (newNotes: Note[]) => void;
 };
 
 /**
@@ -24,6 +24,9 @@ export default class NoteTakingAreaController extends InteractableAreaController
   NoteTakingAreaEvents,
   NoteTakingArea
 > {
+
+  protected _townController: TownController;
+
   toInteractableAreaModel(): NoteTakingArea {
     return {
       id: this.id,
@@ -49,45 +52,61 @@ export default class NoteTakingAreaController extends InteractableAreaController
     return NOTE_TAKING_AREA_TYPE;
   }
 
-  private _notes = '';
+  private _notes: Note[] = [];
+
+  public static _initializeNotes(notes: Note[] | string | undefined): Note[] {
+    if (Array.isArray(notes)) {
+      return notes;
+    }
+    // Handle old single string format or undefined/empty data
+    const content = typeof notes === 'string' ? notes : '';
+    return [
+      {
+        id: 'default-note-1', // Placeholder ID. Using a simple string for now.
+        title: 'Untitled Note 1',
+        content: content,
+      },
+    ];
+  }
 
   /**
    * Create a new NoteTakingAreaController
    * @param id
    * @param notes
    */
-  constructor(id: string, notes: string, townController: TownController) {
-    super(id, townController);
-    this._notes = notes;
+  constructor(id: string, notes: Note[] | string | undefined, townController: TownController) {
+    super(id);
+    this._townController = townController;
+    this._notes = NoteTakingAreaController._initializeNotes(notes);
   }
 
   /**
    * The notes of the note-taking area. Changing the notes will emit a notesChange event
    */
-  private _setNotes(newNotes: string | undefined) {
-    if (newNotes === undefined) {
-      newNotes = '';
+  private _setNotes(newNotes: Note[] | undefined) {
+    const initializedNotes = NoteTakingAreaController._initializeNotes(newNotes);
+
+    // If the new array is a different object reference, we treat it as changed.
+    if (this._notes !== initializedNotes) {
+      this.emit('notesChange', initializedNotes);
     }
-    if (this._notes !== newNotes) {
-      this.emit('notesChange', newNotes);
-    }
-    this._notes = newNotes;
+    this._notes = initializedNotes;
   }
 
-  get notes(): string {
+  get notes(): Note[] {
     return this._notes;
   }
 
   /**
    * Sends a command to the server to update the notes content.
-   * @param newNotes The new notes content (HTML string).
+   * @param newNotes The new notes content (Note[]).
    */
-  public async updateNotes(newNotes: string) {
+  public async updateNotes(newNotes: Note[]) {
     const command: NoteTakingAreaUpdateCommand = {
       type: 'NoteTakingAreaUpdate',
       notes: newNotes,
     };
-    await this.townController.sendInteractableCommand(this.id, command);
+    await this._townController.sendInteractableCommand(this.id, command);
   }
 
   static fromNoteTakingAreaModel(
@@ -95,14 +114,15 @@ export default class NoteTakingAreaController extends InteractableAreaController
     townController: TownController,
     playerFinder: (PlayerIDs: string[]) => PlayerController[],
   ): NoteTakingAreaController {
-    const ret = new NoteTakingAreaController(model.id, model.notes || '', townController);
+    // model.notes is Note[] | undefined, which is handled in the constructor via initializeNotes
+    const ret = new NoteTakingAreaController(model.id, model.notes, townController);
     ret.occupants = playerFinder(model.occupants);
     return ret;
   }
 }
 
-export function useNoteTakingAreaNotes(area: NoteTakingAreaController): string {
-  const [notes, setNotes] = useState(area.notes || '');
+export function useNoteTakingAreaNotes(area: NoteTakingAreaController): Note[] {
+  const [notes, setNotes] = useState(area.notes);
 
   useEffect(() => {
     area.addListener('notesChange', setNotes);
@@ -110,5 +130,5 @@ export function useNoteTakingAreaNotes(area: NoteTakingAreaController): string {
       area.removeListener('notesChange', setNotes);
     };
   }, [area]);
-  return notes || '';
+  return notes;
 }

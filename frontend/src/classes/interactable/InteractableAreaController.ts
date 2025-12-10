@@ -34,16 +34,13 @@ export default abstract class InteractableAreaController<
 > {
   private readonly _id: InteractableID;
 
-  protected readonly _townController: TownController;
-
   private _occupants: PlayerController[] = [];
 
   private _listeners: Map<keyof EmittedEventType, EmittedEventType[keyof EmittedEventType][]> =
     new Map();
 
-  constructor(id: InteractableID, townController: TownController) {
+  constructor(id: InteractableID) {
     this._id = id;
-    this._townController = townController;
   }
 
   get id() {
@@ -155,9 +152,6 @@ export default abstract class InteractableAreaController<
    */
   public abstract get type(): string;
 
-  public get townController(): TownController {
-    return this._townController;
-  }
 }
 /**
  * A react hook to retrieve the occupants of a ConversationAreaController, returning an array of PlayerController.

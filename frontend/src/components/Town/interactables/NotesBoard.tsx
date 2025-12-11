@@ -76,7 +76,7 @@ function NotesBoard({
     debounce((notesToSave: Note[]) => {
       // Only save if the noteTakingAreaController is defined (which it is here)
       noteTakingAreaController.updateNotes(notesToSave);
-    }, 150), // Increased debounce time for array updates
+    }, 300), // Increased debounce time for array updates
     [noteTakingAreaController],
   );
 
@@ -92,7 +92,7 @@ function NotesBoard({
   const activeNote = notes[activeNoteIndex];
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyleKit, ListKit],
+    extensions: [StarterKit.configure({ trailingNode: false }), Underline, TextStyleKit, ListKit],
     content: activeNote?.content || '', // Use content of active note
     immediatelyRender: false,
     onDestroy: () => {

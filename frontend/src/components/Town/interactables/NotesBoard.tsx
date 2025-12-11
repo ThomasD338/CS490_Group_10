@@ -20,14 +20,13 @@ import {
 } from '@chakra-ui/react';
 import { CloseIcon } from '@chakra-ui/icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
 import { ListKit } from '@tiptap/extension-list';
 import { useInteractable } from '../../../classes/TownController';
-import { NoteTakingArea, Note } from '../../../types/CoveyTownSocket';
 import useTownController from '../../../hooks/useTownController';
 import NoteTakingAreaInteractable from './NoteTakingArea';
 import NoteTakingAreaController, {
@@ -35,6 +34,7 @@ import NoteTakingAreaController, {
 } from '../../../classes/interactable/NoteTakingAreaController';
 import { debounce } from 'lodash';
 import JSZip from 'jszip';
+import { Note } from '../../../types/CoveyTownSocket';
 
 const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): Note => ({
   id,
@@ -47,8 +47,6 @@ const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): 
  */
 function NotesBoard({
   noteTakingAreaController,
-  onExport,
-  onImport,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
   onExport: (content: string) => void;
@@ -423,9 +421,7 @@ function NotesBoardModal({
 
       // First pass: count occurrences of each sanitized title
       allNotes.forEach(note => {
-        const sanitizedTitle = note.title
-          .replace(/[<>:"/\\|?*]/g, '_')
-          .trim();
+        const sanitizedTitle = note.title.replace(/[<>:"/\\|?*]/g, '_').trim();
         const count = titleCounts.get(sanitizedTitle) || 0;
         titleCounts.set(sanitizedTitle, count + 1);
       });
@@ -436,10 +432,7 @@ function NotesBoardModal({
       // Add each note as an HTML file
       allNotes.forEach(note => {
         // Sanitize filename: remove invalid characters
-        let sanitizedTitle = note.title
-          .replace(/[<>:"/\\|?*]/g, '_')
-          .trim();
-        
+        let sanitizedTitle = note.title.replace(/[<>:"/\\|?*]/g, '_').trim();
         // Handle empty or whitespace-only titles
         if (!sanitizedTitle) {
           sanitizedTitle = 'Untitled';
@@ -448,12 +441,12 @@ function NotesBoardModal({
         // If there are duplicates of this title, add a number suffix
         const totalCount = titleCounts.get(sanitizedTitle) || 1;
         let filename: string;
-        
+
         if (totalCount > 1) {
           // This title appears multiple times, add a counter
           const usageCount = (titleUsageCounts.get(sanitizedTitle) || 0) + 1;
           titleUsageCounts.set(sanitizedTitle, usageCount);
-          
+
           if (usageCount === 1) {
             // First occurrence, use the original title
             filename = `${sanitizedTitle}.html`;
@@ -475,7 +468,7 @@ function NotesBoardModal({
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       // Create a readable datetime string for the filename
       const now = new Date();
       const year = now.getFullYear();
@@ -485,7 +478,7 @@ function NotesBoardModal({
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const datetimeString = `${year}-${month}-${day}-${hours}${minutes}${seconds}`;
-      
+
       link.download = `notes-export-${datetimeString}.zip`;
       document.body.appendChild(link);
       link.click();
@@ -555,11 +548,11 @@ function NotesBoardModal({
 
             try {
               const htmlContent = await zipFile.async('string');
-              
+
               // Extract title from filename (remove .html extension)
               // Keep any numbers in the title (e.g., "Note 2" stays as "Note 2")
               let title = filename.replace(/\.html$/, '').trim();
-              
+
               // Handle empty titles
               if (!title) {
                 title = 'Untitled';

@@ -24,7 +24,6 @@ export default class NoteTakingAreaController extends InteractableAreaController
   NoteTakingAreaEvents,
   NoteTakingArea
 > {
-
   protected _townController: TownController;
 
   toInteractableAreaModel(): NoteTakingArea {

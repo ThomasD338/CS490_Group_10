@@ -124,4 +124,3 @@ describe('Text formatting', () => {
         });
     });
 });
-    

@@ -39,3 +39,4 @@ Element.prototype.getClientRects = () =>
       toJSON() {},
     },
   ] as unknown as DOMRectList;
+  

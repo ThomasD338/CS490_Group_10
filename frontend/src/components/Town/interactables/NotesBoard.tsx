@@ -73,7 +73,7 @@ export function NotesBoard({
     debounce((notesToSave: Note[]) => {
       // Only save if the noteTakingAreaController is defined (which it is here)
       noteTakingAreaController.updateNotes(notesToSave);
-    }, 150), // Increased debounce time for array updates
+    }, 300), // Increased debounce time for array updates
     [noteTakingAreaController],
   );
 
@@ -94,6 +94,7 @@ export function NotesBoard({
       orderedList: false,
       listItem: false,
       listKeymap: false,
+      trailingNode: false
     })
     , TextStyleKit, ListKit],
     content: activeNote?.content || '', // Use content of active note

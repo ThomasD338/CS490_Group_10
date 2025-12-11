@@ -22,7 +22,6 @@ import { CloseIcon } from '@chakra-ui/icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
 import { ListKit } from '@tiptap/extension-list';
@@ -45,12 +44,10 @@ const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): 
 /**
  * NotesBoard component - A text editor using Tiptap for note-taking
  */
-function NotesBoard({
+export function NotesBoard({
   noteTakingAreaController,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
-  onExport: (content: string) => void;
-  onImport: (content: string) => void;
 }): JSX.Element {
   // remoteNotes is now Note[]
   const remoteNotes = useNoteTakingAreaNotes(noteTakingAreaController);
@@ -92,7 +89,14 @@ function NotesBoard({
   const activeNote = notes[activeNoteIndex];
 
   const editor = useEditor({
-    extensions: [StarterKit.configure({ trailingNode: false }), Underline, TextStyleKit, ListKit],
+    extensions: [StarterKit.configure({
+      bulletList: false,
+      orderedList: false,
+      listItem: false,
+      listKeymap: false,
+      trailingNode: false
+    })
+    , TextStyleKit, ListKit],
     content: activeNote?.content || '', // Use content of active note
     immediatelyRender: false,
     onDestroy: () => {
@@ -212,6 +216,10 @@ function NotesBoard({
     return <></>;
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    (window as any).__editor = editor;
+  }
+
   return (
     <Box width='100%' height='100%'>
       <style>
@@ -220,7 +228,6 @@ function NotesBoard({
         .editable .ProseMirror {
           min-height: 400px;
           padding: 8px;
-        }
         }
 
         .editable .ProseMirror:after {
@@ -296,7 +303,7 @@ function NotesBoard({
                 {/* Only render toolbar and editor if this tab is active AND the editor exists */}
                 {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
                 {editor && index === activeNoteIndex && (
-                  <EditorContent editor={editor} className='editable' />
+                  <EditorContent editor={editor} className='editable' data-testid="tiptap-editor"/>
                 )}
               </Box>
             </TabPanel>
@@ -642,15 +649,13 @@ function NotesBoardModal({
         <ModalBody>
           <NotesBoard
             noteTakingAreaController={noteTakingAreaController}
-            onExport={handleExport}
-            onImport={handleImport}
           />
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme='blue' onClick={handleExport} mr={3}>
+          <Button colorScheme='blue' data-testid='export-button' onClick={handleExport} mr={3}>
             Export Notes
           </Button>
-          <Button colorScheme='green' onClick={handleImport} mr={3}>
+          <Button colorScheme='green' data-testid='import-button' onClick={handleImport}  mr={3}>
             Import Notes
           </Button>
           <Button colorScheme='purple' onClick={handleZipExport} mr={3}>

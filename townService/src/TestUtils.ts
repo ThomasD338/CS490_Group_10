@@ -120,7 +120,7 @@ export function getEventListener<Ev extends ReservedOrUserEventNames<Server, Cli
       return param as unknown as ReservedOrUserListener<Server, ClientToServerEvents, Ev>;
     }
   }
-  throw new Error(`No event listener found for event ${eventName}`);
+  throw new Error(`No event listener found for event ${String(eventName)}`);
 }
 
 export class MockedPlayer {

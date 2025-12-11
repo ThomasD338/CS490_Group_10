@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { EventMap } from 'typed-emitter';
-import TownController from '../TownController';
 import {
   Interactable as InteractableAreaModel,
   InteractableID,
@@ -151,7 +150,6 @@ export default abstract class InteractableAreaController<
    * Return a string that identifies the type of this interactable area.
    */
   public abstract get type(): string;
-
 }
 /**
  * A react hook to retrieve the occupants of a ConversationAreaController, returning an array of PlayerController.

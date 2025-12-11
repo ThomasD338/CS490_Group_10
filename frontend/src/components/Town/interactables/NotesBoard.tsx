@@ -22,7 +22,6 @@ import { CloseIcon } from '@chakra-ui/icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
 import { TextStyleKit } from '@tiptap/extension-text-style';
 import NotesToolbar from './NotesToolBar';
 import { ListKit } from '@tiptap/extension-list';
@@ -89,7 +88,13 @@ export function NotesBoard({
   const activeNote = notes[activeNoteIndex];
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyleKit, ListKit],
+    extensions: [StarterKit.configure({
+      bulletList: false,
+      orderedList: false,
+      listItem: false,
+      listKeymap: false,
+    })
+    , TextStyleKit, ListKit],
     content: activeNote?.content || '', // Use content of active note
     immediatelyRender: false,
     onDestroy: () => {
@@ -221,7 +226,6 @@ export function NotesBoard({
         .editable .ProseMirror {
           min-height: 400px;
           padding: 8px;
-        }
         }
 
         .editable .ProseMirror:after {

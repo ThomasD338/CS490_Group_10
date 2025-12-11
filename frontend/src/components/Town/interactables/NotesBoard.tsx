@@ -34,6 +34,7 @@ import NoteTakingAreaController, {
   useNoteTakingAreaNotes,
 } from '../../../classes/interactable/NoteTakingAreaController';
 import { debounce } from 'lodash';
+import JSZip from 'jszip';
 
 const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): Note => ({
   id,
@@ -309,41 +310,27 @@ function NotesBoard({
 }
 
 /**
- * NotesBoardWrapper - Always rendered component that shows NotesBoard modal when player interacts with NoteTakingArea
+ * Internal component that has access to the controller for zip operations
  */
-export default function NotesBoardWrapper(): JSX.Element {
-  const noteTakingAreaInteractable = useInteractable<NoteTakingAreaInteractable>('noteTakingArea');
-  const townController = useTownController();
-  const isOpen = noteTakingAreaInteractable !== undefined;
-  const noteTakingAreaController = noteTakingAreaInteractable?.controller;
-
-  // Create placeholder model from the interactable
-  useEffect(() => {
-    if (noteTakingAreaInteractable) {
-      // For now, create a placeholder model since NoteTakingArea might not have a controller yet
-      // This can be enhanced later when full backend integration is complete
-      // const placeholderModel: NoteTakingArea = {
-      //   id: noteTakingAreaInteractable.id,
-      //   type: 'NoteTakingArea',
-      //   notes: noteTakingAreaInteractable.notes,
-      //   occupants: [],
-      // };
-      // setNoteTakingAreaModel(placeholderModel);
-      townController.pause();
-    } else {
-      //setNoteTakingAreaModel(undefined);
-      townController.unPause();
-    }
-  }, [townController, noteTakingAreaInteractable]);
+function NotesBoardModal({
+  noteTakingAreaController,
+  noteTakingAreaInteractable,
+  townController,
+}: {
+  noteTakingAreaController: NoteTakingAreaController;
+  noteTakingAreaInteractable: NoteTakingAreaInteractable;
+  townController: ReturnType<typeof useTownController>;
+}): JSX.Element {
+  // Get all notes for zip export/import - hook can be called unconditionally here
+  const allNotes = useNoteTakingAreaNotes(noteTakingAreaController);
 
   const closeModal = useCallback(() => {
-    if (noteTakingAreaInteractable) {
-      townController.interactEnd(noteTakingAreaInteractable);
-    }
+    townController.interactEnd(noteTakingAreaInteractable);
   }, [townController, noteTakingAreaInteractable]);
 
   const toast = useToast();
 
+  // Original single-note export handler (for active note only)
   const handleExport = useCallback(() => {
     const content = (window as any).__notesBoardEditorContent;
     const title: string | undefined = (window as any).__notesBoardEditorTitle;
@@ -369,6 +356,7 @@ export default function NotesBoardWrapper(): JSX.Element {
     }
   }, [toast]);
 
+  // Original single-note import handler (for active note only)
   const handleImport = useCallback(() => {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -415,13 +403,245 @@ export default function NotesBoardWrapper(): JSX.Element {
     console.log('Import button clicked');
   }, [toast]);
 
-  if (!noteTakingAreaController) {
-    return <></>;
-  }
+  // New zip export handler (exports all notes)
+  const handleZipExport = useCallback(async () => {
+    if (!noteTakingAreaController || allNotes.length === 0) {
+      toast({
+        title: 'No notes to export',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+
+      // Track title counts to handle duplicates
+      const titleCounts = new Map<string, number>();
+
+      // First pass: count occurrences of each sanitized title
+      allNotes.forEach(note => {
+        const sanitizedTitle = note.title
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .trim();
+        const count = titleCounts.get(sanitizedTitle) || 0;
+        titleCounts.set(sanitizedTitle, count + 1);
+      });
+
+      // Track how many times we've used each title
+      const titleUsageCounts = new Map<string, number>();
+
+      // Add each note as an HTML file
+      allNotes.forEach(note => {
+        // Sanitize filename: remove invalid characters
+        let sanitizedTitle = note.title
+          .replace(/[<>:"/\\|?*]/g, '_')
+          .trim();
+        
+        // Handle empty or whitespace-only titles
+        if (!sanitizedTitle) {
+          sanitizedTitle = 'Untitled';
+        }
+
+        // If there are duplicates of this title, add a number suffix
+        const totalCount = titleCounts.get(sanitizedTitle) || 1;
+        let filename: string;
+        
+        if (totalCount > 1) {
+          // This title appears multiple times, add a counter
+          const usageCount = (titleUsageCounts.get(sanitizedTitle) || 0) + 1;
+          titleUsageCounts.set(sanitizedTitle, usageCount);
+          
+          if (usageCount === 1) {
+            // First occurrence, use the original title
+            filename = `${sanitizedTitle}.html`;
+          } else {
+            // Subsequent occurrences, add a number
+            filename = `${sanitizedTitle} ${usageCount}.html`;
+          }
+        } else {
+          // Unique title, use as-is
+          filename = `${sanitizedTitle}.html`;
+        }
+
+        // Export as HTML file with the note content
+        zip.file(filename, note.content);
+      });
+
+      // Generate zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Create a readable datetime string for the filename
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const datetimeString = `${year}-${month}-${day}-${hours}${minutes}${seconds}`;
+      
+      link.download = `notes-export-${datetimeString}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: `Exported ${allNotes.length} note(s) to zip successfully!`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error exporting notes to zip:', error);
+      toast({
+        title: 'Failed to export notes',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [noteTakingAreaController, allNotes, toast]);
+
+  // New zip import handler (imports all notes from zip)
+  const handleZipImport = useCallback(() => {
+    if (!noteTakingAreaController) {
+      return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.zip';
+
+    fileInput.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      try {
+        if (target.files && target.files.length > 0) {
+          const file = target.files[0];
+
+          if (!file.name.endsWith('.zip')) {
+            toast({
+              title: 'Invalid file type',
+              description: 'Please select a .zip file',
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+            return;
+          }
+
+          const zip = new JSZip();
+          const zipData = await zip.loadAsync(file);
+
+          // Process all HTML files in the zip
+          const htmlFilePromises = Object.keys(zipData.files).map(async filename => {
+            const zipFile = zipData.files[filename];
+            // Skip directories
+            if (zipFile.dir) {
+              return null;
+            }
+
+            // Only process HTML files
+            if (!filename.endsWith('.html')) {
+              return null;
+            }
+
+            try {
+              const htmlContent = await zipFile.async('string');
+              
+              // Extract title from filename (remove .html extension)
+              // Keep any numbers in the title (e.g., "Note 2" stays as "Note 2")
+              let title = filename.replace(/\.html$/, '').trim();
+              
+              // Handle empty titles
+              if (!title) {
+                title = 'Untitled';
+              }
+
+              // Create a note object from the HTML file
+              const note: Note = {
+                id: `note-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Generate new ID
+                title: title,
+                content: htmlContent,
+              };
+
+              return note;
+            } catch (parseError) {
+              console.error(`Error reading HTML file ${filename}:`, parseError);
+              return null;
+            }
+          });
+
+          const notes = await Promise.all(htmlFilePromises);
+          const validNotes = notes.filter((note): note is Note => note !== null);
+
+          if (validNotes.length === 0) {
+            toast({
+              title: 'No valid notes found',
+              description: 'The zip file does not contain any valid HTML files',
+              status: 'warning',
+              duration: 3000,
+              isClosable: true,
+            });
+            return;
+          }
+
+          // Merge imported notes with existing notes
+          // Ensure all imported notes have unique IDs
+          const currentNoteIds = new Set(allNotes.map(n => n.id));
+          const notesWithNewIds = validNotes.map((note, index) => {
+            let newId = note.id;
+            // If ID conflicts, generate a new one with a unique timestamp offset
+            if (currentNoteIds.has(newId)) {
+              newId = `note-${Date.now() + index}-${Math.random().toString(36).substring(7)}`;
+            }
+            currentNoteIds.add(newId);
+            return { ...note, id: newId };
+          });
+
+          // Update the controller with merged notes
+          const mergedNotes = [...allNotes, ...notesWithNewIds];
+          await noteTakingAreaController.updateNotes(mergedNotes);
+
+          toast({
+            title: `Imported ${notesWithNewIds.length} note(s) from zip successfully!`,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      } catch (error) {
+        console.error('Error importing notes from zip:', error);
+        toast({
+          title: 'Failed to import notes',
+          description: error instanceof Error ? error.message : 'Unknown error',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        // Ensure file input is removed after use, even if errors occur
+        if (document.body.contains(fileInput)) {
+          document.body.removeChild(fileInput);
+        }
+      }
+    };
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  }, [noteTakingAreaController, allNotes, toast]);
+
   const areaName = noteTakingAreaInteractable.name;
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} closeOnOverlayClick={false} size='xl'>
+    <Modal isOpen={true} onClose={closeModal} closeOnOverlayClick={false} size='xl'>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Notes Board - {areaName}</ModalHeader>
@@ -437,11 +657,47 @@ export default function NotesBoardWrapper(): JSX.Element {
           <Button colorScheme='blue' onClick={handleExport} mr={3}>
             Export Notes
           </Button>
-          <Button colorScheme='green' onClick={handleImport}>
+          <Button colorScheme='green' onClick={handleImport} mr={3}>
             Import Notes
+          </Button>
+          <Button colorScheme='purple' onClick={handleZipExport} mr={3}>
+            Export All (ZIP)
+          </Button>
+          <Button colorScheme='orange' onClick={handleZipImport}>
+            Import All (ZIP)
           </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
+  );
+}
+
+/**
+ * NotesBoardWrapper - Always rendered component that shows NotesBoard modal when player interacts with NoteTakingArea
+ */
+export default function NotesBoardWrapper(): JSX.Element {
+  const noteTakingAreaInteractable = useInteractable<NoteTakingAreaInteractable>('noteTakingArea');
+  const townController = useTownController();
+  const noteTakingAreaController = noteTakingAreaInteractable?.controller;
+
+  // Create placeholder model from the interactable
+  useEffect(() => {
+    if (noteTakingAreaInteractable) {
+      townController.pause();
+    } else {
+      townController.unPause();
+    }
+  }, [townController, noteTakingAreaInteractable]);
+
+  if (!noteTakingAreaController || !noteTakingAreaInteractable) {
+    return <></>;
+  }
+
+  return (
+    <NotesBoardModal
+      noteTakingAreaController={noteTakingAreaController}
+      noteTakingAreaInteractable={noteTakingAreaInteractable}
+      townController={townController}
+    />
   );
 }

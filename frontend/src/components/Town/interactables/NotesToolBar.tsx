@@ -52,23 +52,23 @@ export default function NotesToolbar({ editor }: ToolBarProps) {
         />
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleBold().run()}>
+      <Button size='sm' data-testid='toolbar-bold' onClick={() => editor.chain().focus().toggleBold().run()}>
         <b>B</b>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleItalic().run()}>
+      <Button size='sm' data-testid='toolbar-italic' onClick={() => editor.chain().focus().toggleItalic().run()}>
         <em>I</em>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleUnderline().run()}>
+      <Button size='sm' data-testid='toolbar-underline' onClick={() => editor.chain().focus().toggleUnderline().run()}>
         <u>U</u>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleStrike().run()}>
+      <Button size='sm' data-testid='toolbar-strike' onClick={() => editor.chain().focus().toggleStrike().run()}>
         <s>S</s>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleTaskList().run()}>
+      <Button size='sm' data-testid='toolbar-taskList' onClick={() => editor.chain().focus().toggleTaskList().run()}>
         <text>[ ]</text>
       </Button>
 

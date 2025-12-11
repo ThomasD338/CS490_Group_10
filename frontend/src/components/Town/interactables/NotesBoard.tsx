@@ -44,14 +44,10 @@ const createNewNote = (id: string, title: string, content = '<p>New Note</p>'): 
 /**
  * NotesBoard component - A text editor using Tiptap for note-taking
  */
-function NotesBoard({
+export function NotesBoard({
   noteTakingAreaController,
-  onExport,
-  onImport,
 }: {
   noteTakingAreaController: NoteTakingAreaController;
-  onExport: (content: string) => void;
-  onImport: (content: string) => void;
 }): JSX.Element {
   // remoteNotes is now Note[]
   const remoteNotes = useNoteTakingAreaNotes(noteTakingAreaController);
@@ -213,6 +209,10 @@ function NotesBoard({
     return <></>;
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    (window as any).__editor = editor;
+  }
+
   return (
     <Box width='100%' height='100%'>
       <style>
@@ -297,7 +297,7 @@ function NotesBoard({
                 {/* Only render toolbar and editor if this tab is active AND the editor exists */}
                 {editor && index === activeNoteIndex && <NotesToolbar editor={editor} />}
                 {editor && index === activeNoteIndex && (
-                  <EditorContent editor={editor} className='editable' />
+                  <EditorContent editor={editor} className='editable' data-testid="tiptap-editor"/>
                 )}
               </Box>
             </TabPanel>
@@ -429,8 +429,6 @@ export default function NotesBoardWrapper(): JSX.Element {
         <ModalBody>
           <NotesBoard
             noteTakingAreaController={noteTakingAreaController}
-            onExport={handleExport}
-            onImport={handleImport}
           />
         </ModalBody>
         <ModalFooter>

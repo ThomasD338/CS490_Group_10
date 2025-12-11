@@ -1,10 +1,7 @@
 import { mock } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import TownController from '../TownController';
-import { Editor } from '@tiptap/react';
 import NoteTakingAreaController, { NoteTakingAreaEvents } from './NoteTakingAreaController';
-import NotesToolbar from '../../components/Town/interactables/NotesToolBar';
-
 import { PlayerLocation } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 
@@ -33,4 +30,5 @@ describe('Note Editing', () => {
         expect(testArea.notes[0].title).toBe('Untitled Note 1');
         expect(testArea.notes[0].id).toBe('default-note-1');
     });
+
 });

@@ -7,7 +7,7 @@ Keeping documentation within Covey.Town allows multiple users to view and edit t
 ## Running Covey.Town
 If you plan use this feature locally, you must have Covey.Town properly set up. Please see the README at https://github.com/kelloggm/covey.town. 
 
-Otherwise, please visit our link to use this feature: http://localhost:3000/
+Otherwise, please visit our link to use this feature: https://fall25-coveytown-group10.netlify.app/
 
 
 ## Using Notes Feature
@@ -23,8 +23,12 @@ There is a new door to an office room which houses the interactive notes area.
 ### Import/Export
 To save your notes across sessions, we have added the import and export options. 
 
-**Export** will take your notes, turn them into an HTML file, and download them to your computer as <u>notes.html</u> through your browser. 
+**Export Notes** will take your notes, turn them into an HTML file, and download them to your computer as <u>notes.html</u> through your browser. 
 
-**Import** will open your local directory and prompt you to choose an HTML file to upload.
+**Export All (ZIP)** will take all of your open tabs, compress them to a zip file and save them as a zip file named <u>"notes-export-YYYY-MM-DD-HHMMSS"</u>. For example, if the zip file were saved on December 10th, 2025, at 3:45:55 PM, the zip file would save as <u>"notes-export-2025-12-10-154555"</u>.
+
+**Import Notes** will open your local directory and prompt you to choose an HTML file to upload.
+
+**Import All (ZIP)** will open your local directory and prompt you to choose a zip file with HTML files inside. If there are no HTML files found, nothing will upload. Otherwise, the import all feature will import each HTML file as a new tab in the notes area, using the file name as the tab title.
 
 **WARNING!!!** Any edits made to the HTML file that are not supported features such as images/GIFs/etc. will not upload properly in covey.town.

@@ -30,5 +30,4 @@ describe('Note Editing', () => {
         expect(testArea.notes[0].title).toBe('Untitled Note 1');
         expect(testArea.notes[0].id).toBe('default-note-1');
     });
-
 });

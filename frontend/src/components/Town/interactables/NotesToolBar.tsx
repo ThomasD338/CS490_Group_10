@@ -72,11 +72,11 @@ export default function NotesToolbar({ editor }: ToolBarProps) {
         <p>[ ]</p>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleBulletList().run()}>
+      <Button size='sm' data-testid='toolbar-bulletList' onClick={() => editor.chain().focus().toggleBulletList().run()}>
         <b>•</b>
       </Button>
 
-      <Button size='sm' onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+      <Button size='sm' data-testid='toolbar-orderedList' onClick={() => editor.chain().focus().toggleOrderedList().run()}>
         <p>1.</p>
       </Button>
     </HStack>

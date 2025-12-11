@@ -436,10 +436,10 @@ export default function NotesBoardWrapper(): JSX.Element {
           />
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme='blue' onClick={handleExport} mr={3}>
+          <Button colorScheme='blue' data-testid='export-button' onClick={handleExport} mr={3}>
             Export Notes
           </Button>
-          <Button colorScheme='green' onClick={handleImport}>
+          <Button colorScheme='green' data-testid='import-button' onClick={handleImport}>
             Import Notes
           </Button>
         </ModalFooter>

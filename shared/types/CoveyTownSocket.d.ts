@@ -279,6 +279,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
+  disconnect: () => void;
   chatMessage: (message: ChatMessage) => void;
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
